@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Company Search</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@^2.0/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="bg-gray-100">
+<div class="container mx-auto p-4">
+    <div class="bg-white p-6 rounded-lg shadow-md mb-4">
+        <h1 class="text-2xl font-bold text-center mb-6">Search for a Company</h1>
+        <div class="relative mb-6">
+            <input type="text" id="query" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Enter company name or registry code" required>
+            <div id="suggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 hidden">
+                <!-- Suggestions will be dynamically appended here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-bold mb-4">Selected Companies for Comparison</h2>
+        <table id="comparisonTable" class="w-full table-auto border-collapse hidden">
+            <thead>
+            <tr class="bg-gray-200">
+                <th class="border px-4 py-2">Company Name</th>
+                <th class="border px-4 py-2">Registry Code</th>
+                <th class="border px-4 py-2">Address</th>
+                <th class="border px-4 py-2">Industry</th>
+            </tr>
+            </thead>
+            <tbody id="companyInfoTableBody">
+            <!-- Company details will be dynamically appended here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        let selectedCompanies = [];
+
+        $("#query").on("input", function() {
+            const query = $(this).val();
+            if (query.length > 2) { // Start search when more than 2 characters are entered
+                $.ajax({
+                    url: "/search",
+                    type: "GET",
+                    data: { query: query },
+                    success: function(results) {
+                        $("#suggestions").empty().removeClass("hidden");
+                        results.forEach(function(company) {
+                            $("#suggestions").append(
+                                `<div class="company-result px-4 py-2 hover:bg-gray-100 cursor-pointer" data-id="${company.registrikood}" data-name="${company.nimi}">
+                                    <span>${company.nimi}</span> (<span>${company.registrikood}</span>)
+                                </div>`
+                            );
+                        });
+                    }
+                });
+            } else {
+                $("#suggestions").empty().addClass("hidden");
+            }
+        });
+
+        $("#suggestions").on("click", ".company-result", function() {
+            const companyId = $(this).data("id");
+            const companyName = $(this).data("name");
+
+            if (!selectedCompanies.includes(companyId)) {
+                selectedCompanies.push(companyId);
+
+                $.ajax({
+                    url: "/search",
+                    type: "GET",
+                    data: { id: companyId },
+                    success: function(companyDetails) {
+                        $("#comparisonTable").removeClass("hidden");
+                        $("#companyInfoTableBody").append(
+                            `<tr>
+                                <td class="border px-4 py-2">${companyDetails.name}</td>
+                                <td class="border px-4 py-2">${companyDetails.registryCode}</td>
+                                <td class="border px-4 py-2">${companyDetails.address}</td>
+                                <td class="border px-4 py-2">${companyDetails.industry}</td>
+                            </tr>`
+                        );
+                    }
+                });
+            }
+        });
+    });
+</script>
+</body>
+</html>
