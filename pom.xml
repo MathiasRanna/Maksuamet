@@ -44,11 +44,10 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Spring Boot Test dependency for testing -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>1.9.0</version>
         </dependency>
 
         <dependency>

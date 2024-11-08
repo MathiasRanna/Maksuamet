@@ -5,14 +5,14 @@ import lombok.*;
 @Getter
 @Setter
 public class Company {
-    private String registrikood;
-    private String nimi;
-    private String liik;
-    private String KMK;
-    private String valdkond;
-    private String maakond;
-    private float riiklikudMaksud;
-    private float toojouMaksud;
-    private float kaive;
-    private int tootajaid;
+    private String registryCode;
+    private String name;
+    private String type;
+    private String VATPayer;
+    private String Area;
+    private String Region;
+    private float stateTaxes;
+    private float laborTaxes;
+    private float turnover;
+    private int employees;
 }
