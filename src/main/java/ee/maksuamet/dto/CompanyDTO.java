@@ -11,6 +11,7 @@ public class CompanyDTO {
     private String registryCode;
     private String name;
     private int employeeCount;
+    private int previousQuaterEmployeeCount;
     private double employerCost;
 
     private double socialTax;
@@ -23,6 +24,8 @@ public class CompanyDTO {
     private double unemploymentInsuranceEmployee;
 
     private double netoSalary;
+    private double previousQuaterSalary;
+
 
     public CompanyDTO(String RegistryCode, String name) {
         this.registryCode = RegistryCode;

@@ -2,8 +2,10 @@ package ee.maksuamet.api;
 
 import ee.maksuamet.domain.Company;
 import ee.maksuamet.dto.CompanyDTO;
+import ee.maksuamet.repository.CompanyRepository;
 import ee.maksuamet.service.CompanyService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,27 +13,25 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.io.IOException;
 import java.util.*;
 
 @Controller
 public class CompanyController {
-    private final CompanyService companyService;
 
-    public CompanyController(CompanyService companyService) {
-        this.companyService = companyService;
-    }
+    @Autowired
+    private CompanyService companyService;
 
     @GetMapping("/")
     public String displayCompanies(Model model) {
-        List<String> quarters = Arrays.asList("III 2024", "II 2024");
-        model.addAttribute("quarters", quarters);
+        model.addAttribute("quarters", companyService.listAllQuarters());
         return "index";
     }
 
     @GetMapping("/search")
     @ResponseBody
-    public List<Map<String, String>> searchCompanies(@RequestParam("query") String query) {
-        List<Company> companies = companyService.getCompaniesByQuery(query);
+    public List<Map<String, String>> searchCompanies(@RequestParam("query") String query, @RequestParam("quarter") String quarter) {
+        List<Company> companies = companyService.getCompaniesByQuery(query, quarter);
         List<Map<String, String>> results = new ArrayList<>();
         for (Company company : companies) {
             Map<String, String> companyInfo = new HashMap<>();
@@ -44,8 +44,8 @@ public class CompanyController {
 
     @GetMapping("/company-details")
     @ResponseBody
-    public CompanyDTO getCompanyByRegistryCode(@RequestParam("registryCode") String registryCode) {
-        Optional<CompanyDTO> company = companyService.getCompanyBySalaryDetails(registryCode);
+    public CompanyDTO getCompanyByRegistryCode(@RequestParam("registryCode") String registryCode, @RequestParam("quarter") String quarter) {
+        Optional<CompanyDTO> company = companyService.getCompanyBySalaryDetails(registryCode, quarter);
         return company.orElse(null);
     }
 
