@@ -1,20 +1,21 @@
-$(document).ready(function() {
+$(document).ready(function () {
     let selectedCompanies = [];
 
-    $("#query").on("input", function() {
+    $("#query").on("input", function () {
         const query = $(this).val();
         if (query.length > 2) { // Start search when more than 2 characters are entered
             $.ajax({
                 url: "/search",
                 type: "GET",
-                data: { query: query },
-                success: function(results) {
+                data: {query: query},
+                success: function (results) {
                     $("#suggestions").empty().removeClass("hidden");
-                    results.forEach(function(company) {
+                    results.forEach(function (company) {
                         $("#suggestions").append(
-                            `<div class="company-result px-4 py-3 hover:bg-gray-100 cursor-pointer" data-id="${company.registrikood}" data-name="${company.nimi}">
-                                    <span class="font-medium text-gray-800">${company.nimi}</span> (<span class="text-gray-600">${company.registrikood}</span>)
-                                </div>`
+                            `<div data-id="${company.registryCode}" class="company-result hover:bg-blue-50 cursor-pointer border-b border-gray-200 last:border-none rounded-lg">
+        <span class="font-medium text-gray-800">${company.name}</span> 
+        (<span class="text-gray-600">${company.registryCode}</span>)
+    </div>`
                         );
                     });
                 }
@@ -24,35 +25,38 @@ $(document).ready(function() {
         }
     });
 
-    $("#suggestions").on("click", ".company-result", function() {
-        const companyId = $(this).data("id");
-
-        if (!selectedCompanies.includes(companyId)) {
-            selectedCompanies.push(companyId);
+    $("#suggestions").on("click", ".company-result", function () {
+        const registryCode = $(this).data("id");
+        if (!selectedCompanies.includes(registryCode)) {
+            selectedCompanies.push(registryCode);
 
             $.ajax({
                 url: "/company-details",
                 type: "GET",
-                data: { id: companyId },
-                success: function(companyDetails) {
+                data: {registryCode: registryCode},
+                success: function (companyDetails) {
                     $("#comparisonTable").removeClass("hidden");
                     $("#companyInfoTableBody").append(
-                        `<tr data-id="${companyDetails.registryCode}" class="hover:bg-gray-50">
-                            <td class="border px-4 py-2">${companyDetails.registryCode}</td>
-                            <td class="border px-4 py-2">${companyDetails.name}</td>
-                            <td class="border px-4 py-2">${companyDetails.employeeCount}</td>
-                            <td class="border px-4 py-2">${companyDetails.employerCost}</td>
-                            <td class="border px-4 py-2">${companyDetails.socialTax}</td>
-                            <td class="border px-4 py-2">${companyDetails.unemploymentInsuranceEmployer}</td>
-                            <td class="border px-4 py-2">${companyDetails.brutoSalary}</td>
-                            <td class="border px-4 py-2">${companyDetails.incomeTax}</td>
-                            <td class="border px-4 py-2">${companyDetails.pension}</td>
-                            <td class="border px-4 py-2">${companyDetails.unemploymentInsuranceEmployee}</td>
-                            <td class="border px-4 py-2">${companyDetails.netoSalary}</td>
-                            <td class="border px-4 py-2 text-center">
-                                <button class="remove-company bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition duration-200">Remove</button>
+                        `<tr data-id="${companyDetails.registryCode}">
+                            <th class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 text-left text-blueGray-700 ">
+                              ${companyDetails.name}
+                            </th>
+                            <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 ">
+                              ${companyDetails.employeeCount}
                             </td>
-                        </tr>`
+                            <td class="border-t-0 px-6 align-center border-l-0 border-r-0 text-xs whitespace-nowrap p-4">
+                              ${companyDetails.brutoSalary}
+                            </td>
+                            <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4">
+                              <i class="fas fa-arrow-up text-emerald-500 mr-4"></i>
+                              ${companyDetails.netoSalary}
+                            </td>                            
+                            <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4">
+                              <a class="remove-company">
+                                <i class="fa-solid fa-trash-can cursor-pointer"></i>
+                               </a>
+                            </td>
+                          </tr>`
                     );
                     // Clear the search field and hide suggestions
                     $("#query").val("");
@@ -62,7 +66,7 @@ $(document).ready(function() {
         }
     });
 
-    $("#companyInfoTableBody").on("click", ".remove-company", function() {
+    $("#companyInfoTableBody").on("click", ".remove-company", function () {
         const companyId = $(this).closest("tr").data("id");
         selectedCompanies = selectedCompanies.filter(id => id !== companyId);
         $(this).closest("tr").remove();
@@ -71,4 +75,5 @@ $(document).ready(function() {
             $("#comparisonTable").addClass("hidden");
         }
     });
+
 });

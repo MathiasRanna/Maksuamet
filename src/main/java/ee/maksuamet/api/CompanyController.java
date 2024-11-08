@@ -22,7 +22,9 @@ public class CompanyController {
     }
 
     @GetMapping("/")
-    public String displayCompanies() {
+    public String displayCompanies(Model model) {
+        List<String> quarters = Arrays.asList("III 2024", "II 2024");
+        model.addAttribute("quarters", quarters);
         return "index";
     }
 
@@ -33,8 +35,8 @@ public class CompanyController {
         List<Map<String, String>> results = new ArrayList<>();
         for (Company company : companies) {
             Map<String, String> companyInfo = new HashMap<>();
-            companyInfo.put("nimi", company.getName());
-            companyInfo.put("registrikood", company.getRegistryCode());
+            companyInfo.put("name", company.getName());
+            companyInfo.put("registryCode", company.getRegistryCode());
             results.add(companyInfo);
         }
         return results;
@@ -42,7 +44,7 @@ public class CompanyController {
 
     @GetMapping("/company-details")
     @ResponseBody
-    public CompanyDTO getCompanyByRegistrikood(@RequestParam("id") String registryCode) {
+    public CompanyDTO getCompanyByRegistryCode(@RequestParam("registryCode") String registryCode) {
         Optional<CompanyDTO> company = companyService.getCompanyBySalaryDetails(registryCode);
         return company.orElse(null);
     }
