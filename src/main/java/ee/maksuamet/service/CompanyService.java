@@ -5,6 +5,7 @@ import ee.maksuamet.dto.CompanyDTO;
 import ee.maksuamet.repository.CompanyRepository;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,5 +49,12 @@ public class CompanyService {
         return Optional.ofNullable(copmanyDTO);
     }
 
+    public List<String> listAllQuarters() throws IOException {
+        return CompanyRepository.listAllQuarters();
+    }
+
+    public String setCsvPath(String csvPath) throws IOException {
+        return CompanyRepository.setCsvFilePath(csvPath);
+    }
 
 }

@@ -2,6 +2,7 @@ package ee.maksuamet.api;
 
 import ee.maksuamet.domain.Company;
 import ee.maksuamet.dto.CompanyDTO;
+import ee.maksuamet.repository.CompanyRepository;
 import ee.maksuamet.service.CompanyService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.io.IOException;
 import java.util.*;
 
 @Controller
@@ -23,7 +25,12 @@ public class CompanyController {
 
     @GetMapping("/")
     public String displayCompanies(Model model) {
-        List<String> quarters = Arrays.asList("III 2024", "II 2024");
+        List<String> quarters = null;
+        try {
+            quarters = companyService.listAllQuarters();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         model.addAttribute("quarters", quarters);
         return "index";
     }
@@ -47,6 +54,12 @@ public class CompanyController {
     public CompanyDTO getCompanyByRegistryCode(@RequestParam("registryCode") String registryCode) {
         Optional<CompanyDTO> company = companyService.getCompanyBySalaryDetails(registryCode);
         return company.orElse(null);
+    }
+
+    @GetMapping("/update-csv")
+    @ResponseBody
+    public String setCsvFile(@RequestParam("csv") String csv) {
+        return CompanyRepository.setCsvFilePath(csv);
     }
 
 }
