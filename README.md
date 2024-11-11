@@ -60,6 +60,4 @@ Contributions are welcome! Feel free to open an issue or submit a pull request f
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contact
-If you have any questions, please contact us at [your-email@example.com].
 
