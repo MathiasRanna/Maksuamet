@@ -6,10 +6,8 @@ import ee.maksuamet.helpers.Helpers;
 import ee.maksuamet.repository.CompanyRepository;
 import ee.maksuamet.repository.QuarterRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -97,14 +95,6 @@ public class CompanyService {
                 })
                 .map(quarter -> helpers.IntToQuarter(quarter.getQuarter()) + "_" + quarter.getYear())
                 .collect(Collectors.toList());
-    }
-
-    public List<String> listAllQuarters() throws IOException {
-        return CompanyRepository.listAllQuarters();
-    }
-
-    public String setCsvPath(String csvPath) throws IOException {
-        return CompanyRepository.setCsvFilePath(csvPath);
     }
 
 }

@@ -12,18 +12,18 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.BufferedReader;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
@@ -31,10 +31,14 @@ public class TaxFileCrawler {
 
     private static final Logger logger = LoggerFactory.getLogger(TaxFileCrawler.class);
     private final Helpers helpers = new Helpers();
-    private static final String TARGET_URL = "https://www.emta.ee/ariklient/amet-uudised-ja-kontakt/uudised-pressiinfo-statistika/statistika-ja-avaandmed";
-    private static final String CSV_DIR = "src/main/resources/csv_files/";
-//    private static final Pattern FILE_NAME_PATTERN = Pattern.compile("tasutud_maksud_(\\d{4})_(i{1,3}|iv)_kvartal\\.csv", Pattern.CASE_INSENSITIVE);
-    private static final Pattern FILE_NAME_PATTERN = Pattern.compile("tasutud_maksud_2024_ii_kvartal\\.csv", Pattern.CASE_INSENSITIVE);
+
+    @Value("${crawler.target.url}")
+    private String targetUrl;
+
+    @Value("${min.year}")
+    private int MIN_YEAR;
+    private static final String CSV_DIR = "/tmp";
+    private static final Pattern FILE_NAME_PATTERN = Pattern.compile("tasutud_maksud_(\\d{4})_(i{1,3}|iv)_kvartal\\.csv", Pattern.CASE_INSENSITIVE);
 
     @Autowired
     private CompanyRepository companyRepository;
@@ -44,14 +48,16 @@ public class TaxFileCrawler {
 
     public void checkAndDownloadFiles() {
         try {
-            Document document = Jsoup.connect(TARGET_URL).get();
+            Document document = Jsoup.connect(targetUrl).get();
             Elements links = document.select("a[href$=.csv]");
 
             for (Element link : links) {
                 String fileUrl = link.absUrl("href");
                 String fileName = extractFileName(fileUrl);
 
-                if (FILE_NAME_PATTERN.matcher(fileName).matches()) {
+                Matcher matcher = FILE_NAME_PATTERN.matcher(fileName);
+
+                if (matcher.matches() && Integer.parseInt(matcher.group(1)) >= MIN_YEAR) {
                     // Check if the file is already in the database
                     if (quarterRepository.findByFileName(fileName).isEmpty()) {
                         Path filePath = Paths.get(CSV_DIR, fileName);
@@ -107,18 +113,35 @@ public class TaxFileCrawler {
     }
 
     private void readCsvAndSaveToDatabase(Path filePath, Quarter quarter) {
-        try (BufferedReader br = Files.newBufferedReader(filePath)) {
+        List<Company> batch = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(String.valueOf(filePath)), StandardCharsets.UTF_8))) {
             String line;
             boolean isFirstLine = true;
+            int lineCount = 0;
+
             while ((line = br.readLine()) != null) {
                 if (isFirstLine) {
                     isFirstLine = false; // Skip the header line
                     continue;
                 }
+
                 Company company = parseCompanyFromLine(line);
                 company.setQuarter(quarter); // Set the quarter reference before saving
-                companyRepository.save(company); // Save to the database
+                batch.add(company);
+
+                lineCount++;
+                if (lineCount % 10000 == 0) {
+                    companyRepository.saveAll(batch);
+                    batch.clear();
+                    logger.info("Processed {} lines", lineCount);
+                }
             }
+
+            if (!batch.isEmpty()) {
+                companyRepository.saveAll(batch);
+                logger.info("Processed {} lines (final batch)", lineCount);
+            }
+
         } catch (IOException e) {
             logger.error("Error reading CSV file: {}", e.getMessage(), e);
         }
@@ -133,10 +156,12 @@ public class TaxFileCrawler {
         company.setVATPayer(values.length > 3 ? values[3] : "");
         company.setArea(values.length > 4 ? values[4] : "");
         company.setRegion(values.length > 5 ? values[5] : "");
-        company.setStateTaxes(values.length > 6 && !values[6].isEmpty() ? Float.parseFloat(values[6].replace(",", ".")) : 0.0f);
-        company.setLaborTaxes(values.length > 7 && !values[7].isEmpty() ? Float.parseFloat(values[7].replace(",", ".")) : 0.0f);
-        company.setTurnover(values.length > 8 && !values[8].isEmpty() ? Float.parseFloat(values[8].replace(",", ".")) : 0.0f);
-        company.setEmployees(values.length > 9 && !values[9].isEmpty() ? Integer.parseInt(values[9]) : 0);
+
+        company.setStateTaxes(values.length > 6 && !values[6].isEmpty() ? Float.parseFloat(values[6].replace(" ", "").replace(",", ".")) : 0.0f);
+        company.setLaborTaxes(values.length > 7 && !values[7].isEmpty() ? Float.parseFloat(values[7].replace(" ", "").replace(",", ".")) : 0.0f);
+        company.setTurnover(values.length > 8 && !values[8].isEmpty() ? Float.parseFloat(values[8].replace(" ", "").replace(",", ".")) : 0.0f);
+        company.setEmployees(values.length > 9 && !values[9].isEmpty() ? Integer.parseInt(values[9].replace(" ", "")) : 0);
+
         return company;
     }
 
