@@ -55,6 +55,13 @@ public class CompanyService {
     }
 
     private CompanyDTO mapCompanyToDTO(Company company) {
+        if (company.getEmployees() == 0) {
+            CompanyDTO companyDTO = new CompanyDTO(company.getRegistryCode(), company.getName());
+            companyDTO.setEmployeeCount(0);
+            companyDTO.setBrutoSalary(0);
+            companyDTO.setNetoSalary(0);
+            return companyDTO;
+        }
         double monthlyTaxPerEmployee = (company.getLaborTaxes() / 3) / company.getEmployees();
 
         CompanyDTO companyDTO = new CompanyDTO(company.getRegistryCode(), company.getName());
